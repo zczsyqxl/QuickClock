@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use quickclock::render::{self, Fonts, BG, FG};
-use quickclock::single::acquire_or_raise;
+use quickclock::single::{SingleInstance, acquire_or_raise};
 use quickclock::timefmt;
 use quickclock::{center_offset, scaled};
 use chrono::Timelike;
@@ -44,10 +44,18 @@ impl App {
 
         let size = window.inner_size();
         let (w, h) = (size.width.max(1), size.height.max(1));
-        surface
+        // Transient surface failures (display topology change, session
+        // events) skip this frame; the next second retries.
+        if surface
             .resize(NonZeroU32::new(w).unwrap(), NonZeroU32::new(h).unwrap())
-            .expect("resize surface");
-        let mut buffer = surface.buffer_mut().expect("get buffer");
+            .is_err()
+        {
+            return;
+        }
+        let mut buffer = match surface.buffer_mut() {
+            Ok(buffer) => buffer,
+            Err(_) => return,
+        };
         buffer.fill(BG);
 
         let sf = window.scale_factor();
@@ -56,9 +64,9 @@ impl App {
         let date_s = timefmt::format_date(&now.date_naive());
         let day_s = timefmt::weekday_name(&now.date_naive());
 
-        let time_px = scaled(150.0, sf);
-        let date_px = scaled(30.0, sf);
-        let day_px = scaled(20.0, sf);
+        let time_px = scaled(210.0, sf);
+        let date_px = scaled(42.0, sf);
+        let day_px = scaled(28.0, sf);
 
         let (tw, th) = render::measure(&time_s, &fonts.mono, time_px);
         let (dw, dh) = render::measure(&date_s, &fonts.cjk, date_px);
@@ -73,8 +81,8 @@ impl App {
             center_offset(h as i32, th as i32),
         );
 
-        // Date: bottom center with margin.
-        let date_y = h as i32 - dh as i32 - margin;
+        // Date: bottom center with margin, whole bottom block raised 50px.
+        let date_y = h as i32 - dh as i32 - margin - 50;
         render::draw_text(
             &mut buffer, w, &date_s, &fonts.cjk, date_px, FG,
             center_offset(w as i32, dw as i32),
@@ -89,7 +97,9 @@ impl App {
             day_y,
         );
 
-        buffer.present().expect("present buffer");
+        if buffer.present().is_err() {
+            // Frame skipped; the next second retries.
+        }
     }
 }
 
@@ -98,6 +108,11 @@ impl ApplicationHandler for App {
         if self.window.is_some() {
             return;
         }
+        // Fonts first: a fatal font error must not flash a fullscreen window.
+        self.fonts = Some(match render::load_fonts() {
+            Some(fonts) => fonts,
+            None => fail("Failed to load system fonts (Consolas / Microsoft YaHei)."),
+        });
         let window = match event_loop.create_window(
             Window::default_attributes()
                 .with_title(WINDOW_TITLE)
@@ -118,10 +133,6 @@ impl ApplicationHandler for App {
         self.window = Some(window);
         self.context = Some(context);
         self.surface = Some(surface);
-        self.fonts = Some(match render::load_fonts() {
-            Some(fonts) => fonts,
-            None => fail("Failed to load system fonts (Consolas / Microsoft YaHei)."),
-        });
     }
 
     fn window_event(&mut self, _event_loop: &ActiveEventLoop, _id: winit::window::WindowId, event: WindowEvent) {
@@ -178,9 +189,11 @@ fn error_box(title: &str, message: &str) {
 }
 
 fn main() {
-    if !acquire_or_raise(MUTEX_NAME, WINDOW_TITLE) {
+    match acquire_or_raise(MUTEX_NAME, WINDOW_TITLE) {
+        SingleInstance::First => {}
         // Another instance is running and has been raised; exit quietly.
-        return;
+        SingleInstance::AlreadyRunning => return,
+        SingleInstance::MutexFailed => fail("Failed to create single-instance mutex."),
     }
     let event_loop = EventLoop::new().expect("create event loop");
     event_loop.set_control_flow(ControlFlow::Wait);

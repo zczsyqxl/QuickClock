@@ -165,8 +165,19 @@ mod tests {
         draw_text(&mut pix, w, date_s, &fonts.cjk, date_px, FG, center_x(w as i32, dw as i32), date_y);
         let fg_count = pix.iter().filter(|&&p| p == FG).count();
         assert!(fg_count > 0, "date text produced no FG pixels at date_y={date_y}");
-        // painted rows must lie within the buffer
-        assert!(pix.iter().any(|&p| p == FG));
+        // All painted rows must lie inside the buffer, at or below the box top.
+        let mut min_row = h as usize;
+        for y in 0..h as usize {
+            let row = &pix[y * w as usize..(y + 1) * w as usize];
+            if row.iter().any(|&p| p == FG) {
+                min_row = y;
+                break;
+            }
+        }
+        assert!(
+            min_row >= date_y as usize,
+            "painted row {min_row} is above box top {date_y}"
+        );
     }
 
     fn center_x(win_w: i32, text_w: i32) -> i32 {
