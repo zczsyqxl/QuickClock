@@ -1,5 +1,7 @@
 # QuickClock ⏱️
 
+English | [简体中文](README.zh-CN.md)
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Binary](https://img.shields.io/badge/binary-0.7%20MB-success.svg)
