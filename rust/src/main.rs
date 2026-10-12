@@ -64,7 +64,7 @@ impl App {
         let date_s = timefmt::format_date(&now.date_naive());
         let day_s = timefmt::weekday_name(&now.date_naive());
 
-        let time_px = scaled(210.0, sf);
+        let time_px = scaled(150.0, sf);
         let date_px = scaled(42.0, sf);
         let day_px = scaled(28.0, sf);
 
