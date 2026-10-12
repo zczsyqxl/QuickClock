@@ -4,6 +4,7 @@ version = "1.0.0"
 edition = "2021"
 
 [dependencies]
+ab_glyph = "0.2"
 chrono = "0.4"
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
