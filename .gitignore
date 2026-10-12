@@ -1,12 +1,3 @@
 # Build artifacts
 rust/target/
-build/
-dist/
 
-# Python (old version, kept locally)
-venv/
-__pycache__/
-*.pyc
-
-# PyInstaller generated specs
-*.spec
