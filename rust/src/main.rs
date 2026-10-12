@@ -116,7 +116,10 @@ impl ApplicationHandler for App {
         let window = match event_loop.create_window(
             Window::default_attributes()
                 .with_title(WINDOW_TITLE)
-                .with_fullscreen(Some(Fullscreen::Borderless(None))),
+                .with_fullscreen(Some(Fullscreen::Borderless(None)))
+                // Hidden until the first frame is painted: avoids the
+                // default-white flash between window creation and first draw.
+                .with_visible(false),
         ) {
             Ok(window) => window,
             Err(_) => fail("Failed to create window."),
@@ -133,6 +136,13 @@ impl ApplicationHandler for App {
         self.window = Some(window);
         self.context = Some(context);
         self.surface = Some(surface);
+        // Paint the first frame while hidden, then reveal and schedule a
+        // fresh redraw in case the pre-show present did not stick.
+        self.draw();
+        if let Some(window) = &self.window {
+            window.set_visible(true);
+            window.request_redraw();
+        }
     }
 
     fn window_event(&mut self, _event_loop: &ActiveEventLoop, _id: winit::window::WindowId, event: WindowEvent) {
