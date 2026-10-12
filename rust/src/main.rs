@@ -98,26 +98,29 @@ impl ApplicationHandler for App {
         if self.window.is_some() {
             return;
         }
-        let window = Arc::new(
-            event_loop
-                .create_window(
-                    Window::default_attributes()
-                        .with_title(WINDOW_TITLE)
-                        .with_fullscreen(Some(Fullscreen::Borderless(None))),
-                )
-                .expect("create window"),
-        );
-        let context = softbuffer::Context::new(window.clone()).expect("softbuffer context");
-        let surface = softbuffer::Surface::new(&context, window.clone()).expect("softbuffer surface");
+        let window = match event_loop.create_window(
+            Window::default_attributes()
+                .with_title(WINDOW_TITLE)
+                .with_fullscreen(Some(Fullscreen::Borderless(None))),
+        ) {
+            Ok(window) => window,
+            Err(_) => fail("Failed to create window."),
+        };
+        let window = Arc::new(window);
+        let context = match softbuffer::Context::new(window.clone()) {
+            Ok(context) => context,
+            Err(_) => fail("Failed to initialize graphics context."),
+        };
+        let surface = match softbuffer::Surface::new(&context, window.clone()) {
+            Ok(surface) => surface,
+            Err(_) => fail("Failed to initialize graphics surface."),
+        };
         self.window = Some(window);
         self.context = Some(context);
         self.surface = Some(surface);
         self.fonts = Some(match render::load_fonts() {
             Some(fonts) => fonts,
-            None => {
-                error_box("QuickClock", "Failed to load system fonts (Consolas / Microsoft YaHei).");
-                std::process::exit(1);
-            }
+            None => fail("Failed to load system fonts (Consolas / Microsoft YaHei)."),
         });
     }
 
@@ -153,6 +156,12 @@ impl ApplicationHandler for App {
             }
         }
     }
+}
+
+/// Show a fatal-error dialog and exit with a nonzero code (spec section 6).
+fn fail(message: &str) -> ! {
+    error_box("QuickClock", message);
+    std::process::exit(1);
 }
 
 fn error_box(title: &str, message: &str) {
