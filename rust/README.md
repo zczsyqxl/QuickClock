@@ -1,7 +1,7 @@
 # QuickClock (Rust)
 
 A native fullscreen clock: shows the time (HH:MM:SS) centered on screen with
-the date and weekday at the bottom. Press `ESC` to close. Launching a second
+the date and weekday at the bottom. Press `ESC` or `Q` to close. Launching a second
 instance restores and raises the existing window instead of opening a new one.
 
 Rust rewrite of the original Python/pygame version, built for instant startup

@@ -38,10 +38,10 @@ jobs:
 
             **Install**: download `QuickClock-*-windows-x64.zip` below, extract anywhere,
             run `QuickClock.exe`. Recommended: create a desktop shortcut and set a
-            shortcut key (e.g. `Ctrl+Alt+T`). `ESC` closes the clock.
+            shortcut key (e.g. `Ctrl+Alt+T`). `ESC` or `Q` closes the clock.
 
             ---
 
             全屏快速时钟——单文件、秒启动、零依赖。下载下方 zip 解压即用；建议给桌面快捷方式
-            设置快捷键(如 `Ctrl+Alt+T`),`ESC` 关闭。
+            设置快捷键(如 `Ctrl+Alt+T`),`ESC` 或 `Q` 关闭。
           generate_release_notes: true

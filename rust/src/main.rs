@@ -151,12 +151,12 @@ impl ApplicationHandler for App {
             WindowEvent::KeyboardInput {
                 event:
                     KeyEvent {
-                        physical_key: PhysicalKey::Code(KeyCode::Escape),
+                        physical_key: PhysicalKey::Code(code),
                         state: ElementState::Pressed,
                         ..
                     },
                 ..
-            } => std::process::exit(0),
+            } if matches!(code, KeyCode::Escape | KeyCode::KeyQ) => std::process::exit(0),
             WindowEvent::RedrawRequested => self.draw(),
             _ => {}
         }

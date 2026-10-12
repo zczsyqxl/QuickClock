@@ -7,7 +7,7 @@
 ![Binary](https://img.shields.io/badge/binary-0.7%20MB-success.svg)
 ![Startup](https://img.shields.io/badge/startup-%3C200ms-brightgreen.svg)
 
-一个"按下快捷键,时间瞬间呈现"的全屏时钟。给它绑一个键盘快捷键,随手一按即看时间,按 <kbd>ESC</kbd> 立即关闭。
+一个"按下快捷键,时间瞬间呈现"的全屏时钟。给它绑一个键盘快捷键,随手一按即看时间,按 <kbd>ESC</kbd> 或 <kbd>Q</kbd> 立即关闭。
 
 ![QuickClock 截图](docs/screenshot.png)
 
@@ -42,7 +42,7 @@ cargo build --release
 
 产物在 `rust/target/release/QuickClock.exe`——单文件,零依赖,拷到哪都能跑。
 
-**小技巧:** 在桌面放一个它的快捷方式,打开快捷方式属性,设置"快捷键"(如 <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>)。从此时钟一键即达,<kbd>ESC</kbd> 一按即走。
+**小技巧:** 在桌面放一个它的快捷方式,打开快捷方式属性,设置"快捷键"(如 <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>)。从此时钟一键即达,<kbd>ESC</kbd> 或 <kbd>Q</kbd> 一按即走。
 
 ## 设计要点
 

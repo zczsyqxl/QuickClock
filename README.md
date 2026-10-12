@@ -8,7 +8,7 @@ English | [简体中文](README.zh-CN.md)
 ![Startup](https://img.shields.io/badge/startup-%3C200ms-brightgreen.svg)
 
 A fullscreen clock that appears the instant you need it. Bind it to a keyboard
-shortcut, press it, see the time — press <kbd>ESC</kbd> and it's gone.
+shortcut, press it, see the time — press <kbd>ESC</kbd> or <kbd>Q</kbd> and it's gone.
 
 ![QuickClock screenshot](docs/screenshot.png)
 
@@ -50,7 +50,7 @@ dependencies. Copy it anywhere.
 
 **Tip:** put a shortcut to it on your desktop, open the shortcut's properties,
 and set a *shortcut key* (e.g. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>).
-From then on the clock is one keypress away, and <kbd>ESC</kbd> dismisses it.
+From then on the clock is one keypress away, and <kbd>ESC</kbd> or <kbd>Q</kbd> dismisses it.
 
 ## Design notes
 
