@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release
+        working-directory: rust
+
+      - name: Package (with top-level folder)
+        shell: pwsh
+        run: |
+          $folder = "QuickClock-${{ github.ref_name }}"
+          New-Item -ItemType Directory $folder | Out-Null
+          Copy-Item rust/target/release/QuickClock.exe $folder
+          Copy-Item LICENSE $folder
+          Copy-Item packaging/README.txt $folder
+          Compress-Archive -Path $folder -DestinationPath "$folder-windows-x64.zip"
+
+      - name: Create release and upload asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: QuickClock-*-windows-x64.zip
