@@ -48,8 +48,17 @@ cargo build --release
 Your executable is `rust/target/release/QuickClock.exe` — one file, zero
 dependencies. Copy it anywhere.
 
-**Tip:** put a shortcut to it on your desktop, open the shortcut's properties,
-and set a *shortcut key* (e.g. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>).
+## Launching it your way
+
+**Option 1 — Windows shortcut hotkey.** Put a shortcut to it on your desktop,
+open the shortcut's Properties, and set a *shortcut key*
+(e.g. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>).
+
+**Option 2 — Listary.** If you use [Listary](https://www.listary.com), you can
+also set up a quick-launch hotkey for QuickClock as shown below:
+
+![Listary hotkey setup for QuickClock](docs/listary-hotkey.png)
+
 From then on the clock is one keypress away, and <kbd>ESC</kbd> or <kbd>Q</kbd> dismisses it.
 
 ## Design notes

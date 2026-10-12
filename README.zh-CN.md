@@ -42,7 +42,15 @@ cargo build --release
 
 产物在 `rust/target/release/QuickClock.exe`——单文件,零依赖,拷到哪都能跑。
 
-**小技巧:** 在桌面放一个它的快捷方式,打开快捷方式属性,设置"快捷键"(如 <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>)。从此时钟一键即达,<kbd>ESC</kbd> 或 <kbd>Q</kbd> 一按即走。
+## 两种快捷启动方式
+
+**方式一:Windows 快捷方式快捷键。** 在桌面放一个它的快捷方式,打开快捷方式属性,设置"快捷键"(如 <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>T</kbd>)。
+
+**方式二:Listary。** 如果你使用 [Listary](https://www.listary.com),也可以按照下图所示,为 QuickClock 设置快捷启动方式:
+
+![Listary 快捷启动设置](docs/listary-hotkey.png)
+
+从此时钟一键即达,<kbd>ESC</kbd> 或 <kbd>Q</kbd> 一按即走。
 
 ## 设计要点
 
