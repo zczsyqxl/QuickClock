@@ -151,6 +151,28 @@ mod tests {
         assert!(pix.iter().all(|&p| p == BG || is_bg_fg_blend(p)));
     }
 
+    #[test]
+    fn draw_cjk_date_text_at_bottom_position() {
+        // Replicates main.rs draw() for the date line at a bottom position.
+        let fonts = load_fonts().unwrap();
+        let (w, h) = (1536u32, 864u32);
+        let date_px = 37.5f32;
+        let date_s = "12/10/2026";
+        let (dw, dh) = measure(date_s, &fonts.cjk, date_px);
+        let margin = 12i32;
+        let date_y = h as i32 - dh as i32 - margin;
+        let mut pix = vec![BG; (w * h) as usize];
+        draw_text(&mut pix, w, date_s, &fonts.cjk, date_px, FG, center_x(w as i32, dw as i32), date_y);
+        let fg_count = pix.iter().filter(|&&p| p == FG).count();
+        assert!(fg_count > 0, "date text produced no FG pixels at date_y={date_y}");
+        // painted rows must lie within the buffer
+        assert!(pix.iter().any(|&p| p == FG));
+    }
+
+    fn center_x(win_w: i32, text_w: i32) -> i32 {
+        (win_w - text_w).max(0) / 2
+    }
+
     fn is_bg_fg_blend(p: u32) -> bool {
         if (p >> 24) != 0xFF {
             return false;

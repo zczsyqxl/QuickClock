@@ -1,0 +1,180 @@
+#![windows_subsystem = "windows"]
+
+use std::num::NonZeroU32;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+use quickclock::render::{self, Fonts, BG, FG};
+use quickclock::single::acquire_or_raise;
+use quickclock::timefmt;
+use quickclock::{center_offset, scaled};
+use chrono::Timelike;
+use winit::application::ApplicationHandler;
+use winit::event::{ElementState, KeyEvent, WindowEvent};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::{Fullscreen, Window};
+
+const MUTEX_NAME: &str = "QuickClock_SingleInstance";
+const WINDOW_TITLE: &str = "QuickClock";
+
+struct App {
+    window: Option<Arc<Window>>,
+    fonts: Option<Fonts>,
+    surface: Option<softbuffer::Surface<Arc<Window>, Arc<Window>>>,
+    context: Option<softbuffer::Context<Arc<Window>>>,
+    last_second: u32,
+}
+
+impl App {
+    fn new() -> Self {
+        Self {
+            window: None,
+            fonts: None,
+            surface: None,
+            context: None,
+            last_second: u32::MAX,
+        }
+    }
+
+    fn draw(&mut self) {
+        let Some(window) = &self.window else { return };
+        let Some(fonts) = &self.fonts else { return };
+        let Some(surface) = &mut self.surface else { return };
+
+        let size = window.inner_size();
+        let (w, h) = (size.width.max(1), size.height.max(1));
+        surface
+            .resize(NonZeroU32::new(w).unwrap(), NonZeroU32::new(h).unwrap())
+            .expect("resize surface");
+        let mut buffer = surface.buffer_mut().expect("get buffer");
+        buffer.fill(BG);
+
+        let sf = window.scale_factor();
+        let now = timefmt::now_local();
+        let time_s = timefmt::format_time(&now.time());
+        let date_s = timefmt::format_date(&now.date_naive());
+        let day_s = timefmt::weekday_name(&now.date_naive());
+
+        let time_px = scaled(150.0, sf);
+        let date_px = scaled(30.0, sf);
+        let day_px = scaled(20.0, sf);
+
+        let (tw, th) = render::measure(&time_s, &fonts.mono, time_px);
+        let (dw, dh) = render::measure(&date_s, &fonts.cjk, date_px);
+        let (yw, yh) = render::measure(&day_s, &fonts.cjk, day_px);
+
+        let margin = (10.0 * sf) as i32;
+
+        // Time: screen center.
+        render::draw_text(
+            &mut buffer, w, &time_s, &fonts.mono, time_px, FG,
+            center_offset(w as i32, tw as i32),
+            center_offset(h as i32, th as i32),
+        );
+
+        // Date: bottom center with margin.
+        let date_y = h as i32 - dh as i32 - margin;
+        render::draw_text(
+            &mut buffer, w, &date_s, &fonts.cjk, date_px, FG,
+            center_offset(w as i32, dw as i32),
+            date_y,
+        );
+
+        // Weekday: above the date.
+        let day_y = date_y - yh as i32 - margin / 2;
+        render::draw_text(
+            &mut buffer, w, &day_s, &fonts.cjk, day_px, FG,
+            center_offset(w as i32, yw as i32),
+            day_y,
+        );
+
+        buffer.present().expect("present buffer");
+    }
+}
+
+impl ApplicationHandler for App {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        if self.window.is_some() {
+            return;
+        }
+        let window = Arc::new(
+            event_loop
+                .create_window(
+                    Window::default_attributes()
+                        .with_title(WINDOW_TITLE)
+                        .with_fullscreen(Some(Fullscreen::Borderless(None))),
+                )
+                .expect("create window"),
+        );
+        let context = softbuffer::Context::new(window.clone()).expect("softbuffer context");
+        let surface = softbuffer::Surface::new(&context, window.clone()).expect("softbuffer surface");
+        self.window = Some(window);
+        self.context = Some(context);
+        self.surface = Some(surface);
+        self.fonts = Some(match render::load_fonts() {
+            Some(fonts) => fonts,
+            None => {
+                error_box("QuickClock", "Failed to load system fonts (Consolas / Microsoft YaHei).");
+                std::process::exit(1);
+            }
+        });
+    }
+
+    fn window_event(&mut self, _event_loop: &ActiveEventLoop, _id: winit::window::WindowId, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => std::process::exit(0),
+            WindowEvent::KeyboardInput {
+                event:
+                    KeyEvent {
+                        physical_key: PhysicalKey::Code(KeyCode::Escape),
+                        state: ElementState::Pressed,
+                        ..
+                    },
+                ..
+            } => std::process::exit(0),
+            WindowEvent::RedrawRequested => self.draw(),
+            _ => {}
+        }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        let now = timefmt::now_local();
+        // Wake up at the next whole second.
+        let millis_to_next = 1000 - now.timestamp_subsec_millis();
+        event_loop.set_control_flow(ControlFlow::WaitUntil(
+            Instant::now() + Duration::from_millis(millis_to_next as u64),
+        ));
+        let sec = now.second();
+        if sec != self.last_second {
+            self.last_second = sec;
+            if let Some(window) = &self.window {
+                window.request_redraw();
+            }
+        }
+    }
+}
+
+fn error_box(title: &str, message: &str) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::MessageBoxW;
+    let wide = |s: &str| -> Vec<u16> { s.encode_utf16().chain(std::iter::once(0)).collect() };
+    unsafe {
+        MessageBoxW(
+            std::ptr::null_mut(),
+            wide(message).as_ptr(),
+            wide(title).as_ptr(),
+            0, // MB_OK
+        );
+    }
+}
+
+fn main() {
+    if !acquire_or_raise(MUTEX_NAME, WINDOW_TITLE) {
+        // Another instance is running and has been raised; exit quietly.
+        return;
+    }
+    let event_loop = EventLoop::new().expect("create event loop");
+    event_loop.set_control_flow(ControlFlow::Wait);
+    let mut app = App::new();
+    event_loop.run_app(&mut app).expect("run event loop");
+}
